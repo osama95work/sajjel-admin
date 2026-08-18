@@ -1,0 +1,759 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>لوحة تحكم سجّل AI</title>
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body { font-family: 'Segoe UI', Tahoma, Arial, sans-serif; background: #0f172a; color: #e2e8f0; min-height: 100vh; }
+
+    header {
+      background: #0f766e;
+      padding: 16px 24px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+      position: sticky;
+      top: 0;
+      z-index: 20;
+      box-shadow: 0 2px 12px #0008;
+      flex-wrap: wrap;
+    }
+    header h1 { font-size: 1.25rem; font-weight: 700; }
+    header .meta { font-size: 0.8rem; opacity: 0.9; }
+    .header-actions { display: flex; gap: 8px; align-items: center; flex-wrap: wrap; }
+
+    .setup-box {
+      max-width: 440px;
+      margin: 80px auto;
+      background: #1e293b;
+      border-radius: 14px;
+      padding: 32px;
+      box-shadow: 0 4px 24px #0006;
+    }
+    .setup-box h2 { color: #5eead4; margin-bottom: 10px; font-size: 1.15rem; }
+    .setup-box p { color: #94a3b8; font-size: 0.9rem; margin-bottom: 18px; line-height: 1.5; }
+    .setup-box input {
+      width: 100%;
+      background: #0f172a;
+      border: 1px solid #334155;
+      border-radius: 8px;
+      padding: 12px 14px;
+      color: #e2e8f0;
+      font-size: 0.95rem;
+      margin-bottom: 14px;
+      direction: ltr;
+      text-align: left;
+    }
+    .setup-box input:focus { outline: none; border-color: #0f766e; }
+
+    .btn-primary {
+      background: #0f766e;
+      color: #fff;
+      border: none;
+      border-radius: 8px;
+      padding: 11px 16px;
+      font-size: 0.95rem;
+      font-weight: 600;
+      cursor: pointer;
+    }
+    .btn-primary:hover { background: #0d6460; }
+    .btn-primary:disabled { background: #334155; cursor: not-allowed; }
+    .btn-ghost {
+      background: #1e293b;
+      color: #e2e8f0;
+      border: 1px solid #334155;
+      border-radius: 8px;
+      padding: 8px 12px;
+      font-size: 0.85rem;
+      cursor: pointer;
+    }
+    .btn-ghost:hover { border-color: #0f766e; }
+
+    .container { max-width: 1280px; margin: 0 auto; padding: 24px 18px 80px; }
+
+    .stats-row {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 14px;
+      margin-bottom: 22px;
+    }
+    .stat-card {
+      background: #1e293b;
+      border-radius: 12px;
+      padding: 18px;
+      text-align: center;
+      border: 1px solid #334155;
+    }
+    .stat-card .num { font-size: 1.8rem; font-weight: 700; color: #5eead4; }
+    .stat-card .lbl { font-size: 0.82rem; color: #94a3b8; margin-top: 4px; }
+
+    .toolbar {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 12px;
+      margin-bottom: 14px;
+      align-items: center;
+    }
+    .search-bar {
+      flex: 1;
+      min-width: 220px;
+      background: #1e293b;
+      border: 1px solid #334155;
+      border-radius: 8px;
+      padding: 10px 14px;
+      color: #e2e8f0;
+      font-size: 0.95rem;
+    }
+    .search-bar:focus { outline: none; border-color: #0f766e; }
+
+    .filter-row { display: flex; gap: 8px; flex-wrap: wrap; margin-bottom: 16px; }
+    .filter-btn {
+      background: #1e293b;
+      color: #94a3b8;
+      border: 1px solid #334155;
+      border-radius: 6px;
+      padding: 6px 14px;
+      font-size: 0.82rem;
+      cursor: pointer;
+    }
+    .filter-btn.active { background: #0f766e; color: #fff; border-color: #0f766e; }
+
+    .table-wrap {
+      background: #1e293b;
+      border-radius: 12px;
+      border: 1px solid #334155;
+      overflow: auto;
+    }
+    table { width: 100%; border-collapse: collapse; min-width: 980px; }
+    thead tr { background: #0f172a88; }
+    thead th {
+      padding: 12px 12px;
+      text-align: right;
+      font-size: 0.78rem;
+      color: #94a3b8;
+      font-weight: 600;
+      border-bottom: 1px solid #334155;
+      white-space: nowrap;
+    }
+    tbody tr { border-bottom: 1px solid #0f172a; }
+    tbody tr:hover { background: #0f172a55; }
+    tbody td { padding: 12px; font-size: 0.88rem; vertical-align: middle; }
+
+    .badge {
+      display: inline-block;
+      padding: 3px 10px;
+      border-radius: 20px;
+      font-size: 0.76rem;
+      font-weight: 700;
+    }
+    .badge-active { background: #065f46; color: #6ee7b7; }
+    .badge-trial { background: #78350f; color: #fcd34d; }
+    .badge-expired { background: #4c1d1d; color: #fca5a5; }
+    .badge-tester { background: #312e81; color: #c7d2fe; margin-right: 4px; }
+
+    .actions { display: flex; flex-wrap: wrap; gap: 6px; max-width: 340px; }
+    .btn-sm {
+      border: none;
+      border-radius: 6px;
+      padding: 5px 10px;
+      font-size: 0.75rem;
+      cursor: pointer;
+      font-weight: 600;
+    }
+    .btn-activate { background: #0f766e; color: #fff; }
+    .btn-extend { background: #1e3a5f; color: #93c5fd; }
+    .btn-cancel { background: #7f1d1d; color: #fecaca; }
+    .btn-trial { background: #422006; color: #fcd34d; }
+    .btn-tester { background: #312e81; color: #c7d2fe; }
+    .btn-detail { background: #334155; color: #e2e8f0; }
+    .whatsapp-btn {
+      background: #1a3c2a;
+      color: #6ee7b7;
+      border-radius: 6px;
+      padding: 5px 10px;
+      font-size: 0.75rem;
+      text-decoration: none;
+      font-weight: 600;
+    }
+
+    .empty, .loading { text-align: center; padding: 56px 20px; color: #64748b; }
+    .loading { color: #5eead4; }
+
+    .toast {
+      position: fixed;
+      bottom: 24px;
+      left: 50%;
+      transform: translateX(-50%);
+      background: #0f766e;
+      color: #fff;
+      padding: 12px 22px;
+      border-radius: 8px;
+      font-size: 0.9rem;
+      opacity: 0;
+      pointer-events: none;
+      transition: opacity 0.2s;
+      z-index: 100;
+      box-shadow: 0 4px 16px #0008;
+      max-width: 90vw;
+    }
+    .toast.error { background: #991b1b; }
+    .toast.show { opacity: 1; }
+
+    .drawer-backdrop {
+      position: fixed; inset: 0; background: #000a; z-index: 40; display: none;
+    }
+    .drawer-backdrop.show { display: block; }
+    .drawer {
+      position: fixed;
+      top: 0; left: 0;
+      width: min(420px, 100%);
+      height: 100%;
+      background: #1e293b;
+      border-left: 1px solid #334155;
+      z-index: 50;
+      transform: translateX(-105%);
+      transition: transform 0.2s;
+      padding: 20px;
+      overflow: auto;
+    }
+    .drawer.open { transform: translateX(0); }
+    .drawer h3 { color: #5eead4; margin-bottom: 12px; }
+    .drawer .row { margin-bottom: 10px; font-size: 0.9rem; }
+    .drawer .lbl { color: #94a3b8; font-size: 0.78rem; }
+    .drawer ul { margin: 8px 0 16px; padding-right: 18px; color: #cbd5e1; }
+
+    .hidden { display: none !important; }
+    .muted { color: #94a3b8; font-size: 0.82rem; }
+    .mono { direction: ltr; text-align: left; font-variant-numeric: tabular-nums; }
+
+    @media (max-width: 900px) {
+      .stats-row { grid-template-columns: repeat(2, 1fr); }
+    }
+  </style>
+</head>
+<body>
+  <!-- لا مفاتيح Supabase هنا. السرّ يُدخل وقت التشغيل فقط ويُحفظ في sessionStorage. -->
+
+  <div id="loginView" class="setup-box">
+    <h2>أدخل رمز الإدارة</h2>
+    <p>لوحة تحكم سجّل AI — الوصول للمسؤول فقط. الرمز لا يُحفظ على القرص.</p>
+    <input id="secretInput" type="password" placeholder="ADMIN_DASHBOARD_SECRET" autocomplete="off" />
+    <button id="loginBtn" class="btn-primary" style="width:100%">دخول</button>
+  </div>
+
+  <div id="appView" class="hidden">
+    <header>
+      <div>
+        <h1>سجّل AI — لوحة التحكم</h1>
+        <div class="meta" id="syncMeta">آخر مزامنة: —</div>
+      </div>
+      <div class="header-actions">
+        <button class="btn-ghost" id="refreshBtn">تحديث</button>
+        <button class="btn-ghost" id="logoutBtn">خروج</button>
+      </div>
+    </header>
+
+    <div class="container">
+      <div class="stats-row">
+        <div class="stat-card"><div class="num" id="statTotal">0</div><div class="lbl">إجمالي المستخدمين</div></div>
+        <div class="stat-card"><div class="num" id="statActive">0</div><div class="lbl">مشتركون نشطون</div></div>
+        <div class="stat-card"><div class="num" id="statTrial">0</div><div class="lbl">في فترة التجربة</div></div>
+        <div class="stat-card"><div class="num" id="statExpired">0</div><div class="lbl">منتهي</div></div>
+      </div>
+
+      <div class="toolbar">
+        <input id="searchBox" class="search-bar" type="search" placeholder="بحث: اسم المتجر، صاحب المتجر، الهاتف، المدينة، العنوان…" />
+      </div>
+
+      <div class="filter-row">
+        <button class="filter-btn active" data-filter="all">الكل</button>
+        <button class="filter-btn" data-filter="active">نشط</button>
+        <button class="filter-btn" data-filter="trial">تجربة</button>
+        <button class="filter-btn" data-filter="expired">منتهي</button>
+      </div>
+
+      <div class="table-wrap">
+        <div id="loadingState" class="loading">جاري التحميل…</div>
+        <div id="emptyState" class="empty hidden">لا يوجد مستخدمون مطابقون</div>
+        <table id="usersTable" class="hidden">
+          <thead>
+            <tr>
+              <th>اسم المتجر</th>
+              <th>صاحب المتجر</th>
+              <th>رقم الهاتف</th>
+              <th>المدينة</th>
+              <th>الحالة</th>
+              <th>الوقت المتبقي</th>
+              <th>تاريخ التسجيل</th>
+              <th>إجراءات</th>
+            </tr>
+          </thead>
+          <tbody id="usersBody"></tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+
+  <div id="drawerBackdrop" class="drawer-backdrop"></div>
+  <aside id="drawer" class="drawer" aria-hidden="true">
+    <button class="btn-ghost" id="closeDrawer" style="margin-bottom:14px">إغلاق</button>
+    <div id="drawerContent"></div>
+  </aside>
+
+  <div id="toast" class="toast"></div>
+
+  <script>
+(function () {
+  'use strict';
+
+  /** Endpoint فقط — بدون أي مفتاح Supabase في هذا الملف. */
+  var API_URL = 'https://jvokikjzebegaofojcba.supabase.co/functions/v1/admin-dashboard';
+  var SECRET_KEY = 'sajjel_admin_secret';
+  var REFRESH_MS = 30000;
+
+  var state = {
+    users: [],
+    summary: { total: 0, active: 0, trial: 0, expired: 0 },
+    filter: 'all',
+    query: '',
+    loading: false,
+    timer: null,
+  };
+
+  var el = {
+    loginView: document.getElementById('loginView'),
+    appView: document.getElementById('appView'),
+    secretInput: document.getElementById('secretInput'),
+    loginBtn: document.getElementById('loginBtn'),
+    refreshBtn: document.getElementById('refreshBtn'),
+    logoutBtn: document.getElementById('logoutBtn'),
+    syncMeta: document.getElementById('syncMeta'),
+    searchBox: document.getElementById('searchBox'),
+    loadingState: document.getElementById('loadingState'),
+    emptyState: document.getElementById('emptyState'),
+    usersTable: document.getElementById('usersTable'),
+    usersBody: document.getElementById('usersBody'),
+    toast: document.getElementById('toast'),
+    drawer: document.getElementById('drawer'),
+    drawerBackdrop: document.getElementById('drawerBackdrop'),
+    drawerContent: document.getElementById('drawerContent'),
+    closeDrawer: document.getElementById('closeDrawer'),
+    statTotal: document.getElementById('statTotal'),
+    statActive: document.getElementById('statActive'),
+    statTrial: document.getElementById('statTrial'),
+    statExpired: document.getElementById('statExpired'),
+  };
+
+  function getSecret() {
+    return sessionStorage.getItem(SECRET_KEY) || '';
+  }
+
+  function setSecret(v) {
+    sessionStorage.setItem(SECRET_KEY, v);
+  }
+
+  function clearSecret() {
+    sessionStorage.removeItem(SECRET_KEY);
+  }
+
+  function showToast(msg, isError) {
+    el.toast.textContent = msg;
+    el.toast.className = 'toast show' + (isError ? ' error' : '');
+    clearTimeout(showToast._t);
+    showToast._t = setTimeout(function () {
+      el.toast.className = 'toast';
+    }, 3200);
+  }
+
+  function escapeHtml(s) {
+    return String(s == null ? '' : s)
+      .replace(/&/g, '&amp;')
+      .replace(/</g, '&lt;')
+      .replace(/>/g, '&gt;')
+      .replace(/"/g, '&quot;');
+  }
+
+  function formatDate(iso) {
+    if (!iso) return '—';
+    try {
+      var d = new Date(iso);
+      if (isNaN(d.getTime())) return '—';
+      return d.toLocaleDateString('ar-EG', { year: 'numeric', month: 'short', day: 'numeric' });
+    } catch (_) {
+      return '—';
+    }
+  }
+
+  function digitsPhone(phone) {
+    return String(phone || '').replace(/\D/g, '');
+  }
+
+  function waLink(phone) {
+    var d = digitsPhone(phone);
+    if (!d) return null;
+    return 'https://wa.me/' + d;
+  }
+
+  function showLogin() {
+    el.loginView.classList.remove('hidden');
+    el.appView.classList.add('hidden');
+    if (state.timer) {
+      clearInterval(state.timer);
+      state.timer = null;
+    }
+  }
+
+  function showApp() {
+    el.loginView.classList.add('hidden');
+    el.appView.classList.remove('hidden');
+  }
+
+  async function api(body) {
+    var secret = getSecret();
+    var res = await fetch(API_URL, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'x-admin-secret': secret,
+      },
+      body: JSON.stringify(body),
+    });
+    if (res.status === 401) {
+      clearSecret();
+      showLogin();
+      showToast('انتهت الجلسة أو الرمز غير صحيح', true);
+      throw new Error('unauthorized');
+    }
+    var json = null;
+    try {
+      json = await res.json();
+    } catch (_) {
+      throw new Error('bad_response');
+    }
+    if (!json || json.ok === false) {
+      throw new Error((json && json.error) || 'request_failed');
+    }
+    return json;
+  }
+
+  function addMonths(date, months) {
+    var d = new Date(date.getTime());
+    var day = d.getUTCDate();
+    d.setUTCMonth(d.getUTCMonth() + months);
+    if (d.getUTCDate() < day) d.setUTCDate(0);
+    return d;
+  }
+
+  function filteredUsers() {
+    var q = (state.query || '').trim().toLowerCase();
+    var qDigits = q.replace(/\D/g, '');
+    return state.users.filter(function (u) {
+      if (state.filter !== 'all' && u.status !== state.filter) return false;
+      if (!q) return true;
+      var biz = u.business || {};
+      var hay = [
+        biz.name,
+        biz.owner_name,
+        biz.phone,
+        biz.city,
+        biz.address,
+        u.phone,
+        u.user_id,
+        u.access && u.access.subscription_plan,
+      ]
+        .map(function (x) { return String(x || '').toLowerCase(); })
+        .join(' | ');
+      if (hay.indexOf(q) !== -1) return true;
+      if (qDigits) {
+        var phones = digitsPhone(biz.phone) + ' ' + digitsPhone(u.phone);
+        if (phones.indexOf(qDigits) !== -1) return true;
+      }
+      return false;
+    });
+  }
+
+  function statusBadge(u) {
+    var map = {
+      active: ['badge-active', 'نشط'],
+      trial: ['badge-trial', 'تجربة'],
+      expired: ['badge-expired', 'منتهي'],
+    };
+    var m = map[u.status] || map.expired;
+    var tester = u.access && u.access.is_tester
+      ? '<span class="badge badge-tester">مختبر</span>'
+      : '';
+    return tester + '<span class="badge ' + m[0] + '">' + m[1] + '</span>';
+  }
+
+  function render() {
+    el.statTotal.textContent = String(state.summary.total || 0);
+    el.statActive.textContent = String(state.summary.active || 0);
+    el.statTrial.textContent = String(state.summary.trial || 0);
+    el.statExpired.textContent = String(state.summary.expired || 0);
+
+    if (state.loading && !state.users.length) {
+      el.loadingState.classList.remove('hidden');
+      el.emptyState.classList.add('hidden');
+      el.usersTable.classList.add('hidden');
+      return;
+    }
+    el.loadingState.classList.add('hidden');
+
+    var rows = filteredUsers();
+    if (!rows.length) {
+      el.emptyState.classList.remove('hidden');
+      el.usersTable.classList.add('hidden');
+      return;
+    }
+    el.emptyState.classList.add('hidden');
+    el.usersTable.classList.remove('hidden');
+
+    el.usersBody.innerHTML = rows.map(function (u) {
+      var biz = u.business || {};
+      var phone = u.phone || biz.phone || '';
+      var wa = waLink(phone);
+      var isTester = !!(u.access && u.access.is_tester);
+      return (
+        '<tr data-id="' + escapeHtml(u.user_id) + '">' +
+          '<td>' + escapeHtml(biz.name || '—') +
+            (u.business_count > 1 ? ' <span class="muted">(' + u.business_count + ')</span>' : '') +
+          '</td>' +
+          '<td>' + escapeHtml(biz.owner_name || '—') + '</td>' +
+          '<td class="mono">' + escapeHtml(phone || '—') + '</td>' +
+          '<td>' + escapeHtml(biz.city || '—') + '</td>' +
+          '<td>' + statusBadge(u) + '</td>' +
+          '<td>' + escapeHtml((u.time_remaining && u.time_remaining.label) || '—') + '</td>' +
+          '<td>' + escapeHtml(formatDate(u.created_at)) + '</td>' +
+          '<td><div class="actions">' +
+            '<button class="btn-sm btn-activate" data-act="activate">تفعيل اشتراك</button>' +
+            '<button class="btn-sm btn-extend" data-act="extend">تمديد</button>' +
+            '<button class="btn-sm btn-cancel" data-act="cancel">إلغاء الاشتراك</button>' +
+            '<button class="btn-sm btn-trial" data-act="trial">تمديد التجربة</button>' +
+            '<button class="btn-sm btn-tester" data-act="tester">' +
+              (isTester ? 'إلغاء وضع المختبر' : 'تفعيل وضع المختبر') +
+            '</button>' +
+            '<button class="btn-sm btn-cancel" data-act="deactivate">تعطيل الحساب</button>' +
+            '<button class="btn-sm btn-detail" data-act="detail">تفاصيل</button>' +
+            (wa
+              ? '<a class="whatsapp-btn" href="' + wa + '" target="_blank" rel="noopener">واتساب</a>'
+              : '') +
+          '</div></td>' +
+        '</tr>'
+      );
+    }).join('');
+  }
+
+  async function refreshList(silent) {
+    if (!getSecret()) return;
+    state.loading = true;
+    if (!silent) render();
+    try {
+      var res = await api({ type: 'list' });
+      state.users = (res.data && res.data.users) || [];
+      state.summary = (res.data && res.data.summary) || state.summary;
+      el.syncMeta.textContent = 'آخر مزامنة: ' + new Date().toLocaleTimeString('ar-EG');
+      if (!silent) showToast('تم التحديث');
+    } catch (e) {
+      if (String(e.message) !== 'unauthorized') {
+        showToast('فشل التحديث', true);
+      }
+    } finally {
+      state.loading = false;
+      render();
+    }
+  }
+
+  async function runAction(type, payload) {
+    try {
+      await api(Object.assign({ type: type }, payload));
+      showToast('تم بنجاح');
+      await refreshList(true);
+    } catch (e) {
+      if (String(e.message) !== 'unauthorized') {
+        showToast('فشلت العملية: ' + (e.message || ''), true);
+      }
+    }
+  }
+
+  function promptActivate(userId) {
+    var planChoice = prompt('الخطة: اكتب monthly أو quarterly أو annual (أو اتركها فارغة)', 'monthly');
+    if (planChoice === null) return;
+    var plan = String(planChoice).trim().toLowerCase();
+    var months = 1;
+    if (plan === 'quarterly' || plan === '3' || plan.indexOf('3') === 0) {
+      plan = 'quarterly';
+      months = 3;
+    } else if (plan === 'annual' || plan === 'year' || plan === 'سنوي') {
+      plan = 'annual';
+      months = 12;
+    } else if (!plan || plan === 'monthly' || plan === 'شهر') {
+      plan = 'monthly';
+      months = 1;
+    } else {
+      // custom plan label — still ask months
+      var m = prompt('عدد الأشهر لهذه الخطة؟', '1');
+      if (m === null) return;
+      months = Math.max(1, parseInt(m, 10) || 1);
+    }
+    var ends = addMonths(new Date(), months).toISOString();
+    runAction('activate_subscription', { user_id: userId, plan: plan, ends_at: ends });
+  }
+
+  function onRowClick(e) {
+    var btn = e.target.closest('[data-act]');
+    if (!btn) return;
+    var tr = btn.closest('tr');
+    if (!tr) return;
+    var userId = tr.getAttribute('data-id');
+    var act = btn.getAttribute('data-act');
+    var user = state.users.find(function (u) { return u.user_id === userId; });
+
+    if (act === 'activate') {
+      promptActivate(userId);
+    } else if (act === 'extend') {
+      var days = prompt('عدد أيام التمديد؟', '30');
+      if (days === null) return;
+      var n = parseInt(days, 10);
+      if (!n || n < 1) {
+        showToast('عدد أيام غير صالح', true);
+        return;
+      }
+      runAction('extend_subscription', { user_id: userId, days: n });
+    } else if (act === 'cancel') {
+      if (!confirm('إلغاء الاشتراك فوراً لهذا المستخدم؟')) return;
+      runAction('cancel_subscription', { user_id: userId });
+    } else if (act === 'trial') {
+      var td = prompt('أيام التجربة (اتركه فارغاً للإبقاء على القيمة الحالية وإعادة البدء من الآن)', '');
+      if (td === null) return;
+      var payload = { user_id: userId };
+      if (String(td).trim()) {
+        var dn = parseInt(td, 10);
+        if (!dn || dn < 1) {
+          showToast('عدد أيام غير صالح', true);
+          return;
+        }
+        payload.days = dn;
+      }
+      runAction('extend_trial', payload);
+    } else if (act === 'tester') {
+      var next = !(user && user.access && user.access.is_tester);
+      var msg = next
+        ? 'تفعيل وضع المختبر (وصول دائم)؟'
+        : 'إلغاء وضع المختبر؟';
+      if (!confirm(msg)) return;
+      runAction('set_tester', { user_id: userId, value: next });
+    } else if (act === 'deactivate') {
+      if (!confirm('تحذير: سيتم إلغاء الوصول فوراً (اشتراك + مختبر). البيانات لن تُحذف. متابعة؟')) return;
+      runAction('deactivate_account', { user_id: userId });
+    } else if (act === 'detail') {
+      openDetail(userId);
+    }
+  }
+
+  async function openDetail(userId) {
+    el.drawerContent.innerHTML = '<p class="muted">جاري التحميل…</p>';
+    el.drawer.classList.add('open');
+    el.drawerBackdrop.classList.add('show');
+    try {
+      var res = await api({ type: 'get_user', user_id: userId });
+      var u = res.data || {};
+      var biz = u.business || {};
+      var list = (u.businesses || []).map(function (b) {
+        return '<li>' + escapeHtml(b.name || '—') +
+          (b.city ? ' — ' + escapeHtml(b.city) : '') +
+          (b.address ? ' (' + escapeHtml(b.address) + ')' : '') +
+          '</li>';
+      }).join('') || '<li class="muted">لا يوجد</li>';
+      var counts = u.counts || {};
+      el.drawerContent.innerHTML =
+        '<h3>تفاصيل المستخدم</h3>' +
+        '<div class="row"><div class="lbl">المعرّف</div><div class="mono">' + escapeHtml(u.user_id) + '</div></div>' +
+        '<div class="row"><div class="lbl">الهاتف</div><div class="mono">' + escapeHtml(u.phone || '—') + '</div></div>' +
+        '<div class="row"><div class="lbl">الحالة</div><div>' + statusBadge(u) + '</div></div>' +
+        '<div class="row"><div class="lbl">الوقت المتبقي</div><div>' + escapeHtml((u.time_remaining && u.time_remaining.label) || '—') + '</div></div>' +
+        '<div class="row"><div class="lbl">الخطة</div><div>' + escapeHtml((u.access && u.access.subscription_plan) || '—') + '</div></div>' +
+        '<div class="row"><div class="lbl">ينتهي الاشتراك</div><div>' + escapeHtml(formatDate(u.access && u.access.subscription_ends_at)) + '</div></div>' +
+        '<div class="row"><div class="lbl">المتجر الرئيسي</div><div>' + escapeHtml(biz.name || '—') + '</div></div>' +
+        '<div class="row"><div class="lbl">صاحب المتجر</div><div>' + escapeHtml(biz.owner_name || '—') + '</div></div>' +
+        '<div class="row"><div class="lbl">المدينة / العنوان</div><div>' +
+          escapeHtml([biz.city, biz.address].filter(Boolean).join(' — ') || '—') +
+        '</div></div>' +
+        '<div class="row"><div class="lbl">الأعمال</div><ul>' + list + '</ul></div>' +
+        '<div class="row"><div class="lbl">العملاء / الحركات</div><div>' +
+          (counts.customers || 0) + ' / ' + (counts.transactions || 0) +
+        '</div></div>';
+    } catch (e) {
+      el.drawerContent.innerHTML = '<p class="muted">تعذّر تحميل التفاصيل</p>';
+    }
+  }
+
+  function closeDrawer() {
+    el.drawer.classList.remove('open');
+    el.drawerBackdrop.classList.remove('show');
+  }
+
+  function startAutoRefresh() {
+    if (state.timer) clearInterval(state.timer);
+    state.timer = setInterval(function () {
+      refreshList(true);
+    }, REFRESH_MS);
+  }
+
+  el.loginBtn.addEventListener('click', function () {
+    var v = (el.secretInput.value || '').trim();
+    if (!v) {
+      showToast('أدخل الرمز', true);
+      return;
+    }
+    setSecret(v);
+    showApp();
+    refreshList(false);
+    startAutoRefresh();
+  });
+
+  el.secretInput.addEventListener('keydown', function (e) {
+    if (e.key === 'Enter') el.loginBtn.click();
+  });
+
+  el.refreshBtn.addEventListener('click', function () {
+    refreshList(false);
+  });
+
+  el.logoutBtn.addEventListener('click', function () {
+    clearSecret();
+    showLogin();
+    showToast('تم الخروج');
+  });
+
+  el.searchBox.addEventListener('input', function () {
+    state.query = el.searchBox.value || '';
+    render();
+  });
+
+  document.querySelectorAll('.filter-btn').forEach(function (btn) {
+    btn.addEventListener('click', function () {
+      document.querySelectorAll('.filter-btn').forEach(function (b) { b.classList.remove('active'); });
+      btn.classList.add('active');
+      state.filter = btn.getAttribute('data-filter') || 'all';
+      render();
+    });
+  });
+
+  el.usersBody.addEventListener('click', onRowClick);
+  el.closeDrawer.addEventListener('click', closeDrawer);
+  el.drawerBackdrop.addEventListener('click', closeDrawer);
+
+  if (getSecret()) {
+    showApp();
+    refreshList(true);
+    startAutoRefresh();
+  } else {
+    showLogin();
+  }
+})();
+  </script>
+</body>
+</html>
